@@ -65,6 +65,10 @@ func (s *Sanitizer) Sanitize(o interface{}) error {
 
 type fieldSanFn = func(s Sanitizer, structValue reflect.Value, idx int) error
 
+func (s *Sanitizer) AddSanitizer(typeString string, function func(Sanitizer, reflect.Value, int) error) {
+	fieldSanFns[typeString] = function
+}
+
 var fieldSanFns = map[string]fieldSanFn{
 	"string":      sanitizeStrField,
 	"[]string":    sanitizeStrField,
