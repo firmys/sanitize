@@ -3,6 +3,7 @@
 package sanitize
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 )
@@ -65,8 +66,28 @@ func (s *Sanitizer) Sanitize(o interface{}) error {
 
 type fieldSanFn = func(s Sanitizer, structValue reflect.Value, idx int) error
 
-func (s *Sanitizer) AddSanitizer(typeString string, function func(Sanitizer, reflect.Value, int) error) {
-	fieldSanFns[typeString] = function
+func (s *Sanitizer) RegisterSanitizer(sanType interface{}, function func(Sanitizer, reflect.Value, int) error) {
+	fieldSanFns[getValue(sanType).Type().String()] = function
+}
+
+func (s *Sanitizer) GetSanitizeByType(sanType interface{}) (func(Sanitizer, reflect.Value, int) error, error) {
+	value := getValue(sanType)
+	function, ok := fieldSanFns[value.Type().String()]
+	if !ok {
+		return nil, errors.New("sanitize function not found for " + value.Type().String())
+	}
+	return function, nil
+}
+
+func getValue(sanType interface{}) reflect.Value {
+	var value reflect.Value
+	// If we have a pointer, we should get the Value it points to
+	if reflect.ValueOf(sanType).Kind() == reflect.Ptr || reflect.ValueOf(sanType).Kind() == reflect.Interface {
+		value = reflect.ValueOf(sanType).Elem()
+	} else {
+		value = reflect.ValueOf(sanType)
+	}
+	return value
 }
 
 var fieldSanFns = map[string]fieldSanFn{
