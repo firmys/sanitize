@@ -3,9 +3,10 @@
 package sanitize
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/pkg/errors"
 )
 
 // DefaultTagName intance is the name of the tag that must be present on the string
@@ -61,7 +62,15 @@ func (s *Sanitizer) Sanitize(o interface{}) error {
 	// Get both the value and the type of what the pointer points to. Value is
 	// used to mutate underlying data and Type is used to get the name of the
 	// field.
-	return s.sanitizeRec(reflect.ValueOf(o).Elem())
+
+	iterable, err := s.iterable(o)
+	if err != nil {
+		return err
+	}
+	if valid, _ := s.isValid(o); valid && !iterable {
+		return s.sanitizeRec(reflect.ValueOf(o).Elem())
+	}
+	return nil
 }
 
 type fieldSanFn = func(s Sanitizer, structValue reflect.Value, idx int) error
@@ -77,6 +86,61 @@ func (s *Sanitizer) GetSanitizeByType(sanType interface{}) (func(Sanitizer, refl
 		return nil, errors.New("sanitize function not found for " + value.Type().String())
 	}
 	return function, nil
+}
+
+func (s *Sanitizer) iterable(st interface{}) (bool, error) {
+	value := getValue(st)
+	var err error
+	if value.Kind() == reflect.Slice {
+		if value.Len() != 0 {
+			for i := 0; i < value.Len(); i++ {
+				iErr := s.Sanitize(value.Index(i).Interface())
+				if err == nil {
+					err = iErr
+				} else {
+					err = errors.Wrap(err, iErr.Error())
+				}
+			}
+		}
+	} else if value.Kind() == reflect.Map {
+		if value.Len() != 0 {
+			for _, k := range value.MapKeys() {
+				iErr := s.Sanitize(value.MapIndex(k).Interface())
+				if err == nil {
+					err = iErr
+				} else {
+					err = errors.Wrap(err, iErr.Error())
+				}
+			}
+		}
+	} else {
+		return false, nil
+	}
+	return true, err
+}
+
+func (s *Sanitizer) isValid(st interface{}) (bool, error) {
+	var value reflect.Value
+	// If we have a pointer, we should get the Value it points to
+	if reflect.ValueOf(st).Kind() == reflect.Ptr || reflect.ValueOf(st).Kind() == reflect.Interface {
+		value = reflect.ValueOf(st).Elem()
+	} else {
+		value = reflect.ValueOf(st)
+	}
+
+	var err error
+
+	// We shouldn't be trying to sanitize anything invalid, or which isn't a struct
+	if st == nil {
+		return false, nil
+	} else if value.Kind() != reflect.Struct {
+		return false, nil
+	} else if value.Kind() == reflect.Struct {
+		if !value.CanSet() || st == reflect.Zero(reflect.TypeOf(st)).Interface() {
+			return false, nil
+		}
+	}
+	return true, err
 }
 
 func getValue(sanType interface{}) reflect.Value {
