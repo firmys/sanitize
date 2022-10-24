@@ -1,6 +1,6 @@
 # sanitize
 
-[![Go](https://github.com/go-sanitize/sanitize/actions/workflows/go.yml/badge.svg)](https://github.com/go-sanitize/sanitize/actions/workflows/go.yml)
+[![Go](https://github.com/pplatt53666/sanitize/actions/workflows/go.yml/badge.svg)](https://github.com/pplatt53666/sanitize/actions/workflows/go.yml)
 
 Package sanitize provides an easy way to clean fields in structs: trimming, applying maximum string lengths, minimum numeric values, default values, and so on...
 
@@ -9,7 +9,7 @@ Sanitizing a struct will mutate the fields according to rules in the `san` tag. 
 
 ## Install
 
-`go get github.com/go-sanitize/sanitize`
+`go get github.com/pplatt53666/sanitize`
 
 
 ## Usage example
@@ -17,7 +17,7 @@ Sanitizing a struct will mutate the fields according to rules in the `san` tag. 
 ```go
 package main
 
-import "github.com/go-sanitize/sanitize"
+import "github.com/pplatt53666/sanitize"
 
 type Dog struct {
     Name  string  `san:"max=5,trim,lower"`
