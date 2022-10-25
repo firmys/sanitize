@@ -258,6 +258,8 @@ func (s Sanitizer) sanitizeRec(v reflect.Value) error {
 				return err
 			}
 		}
+		isPtrToMap := fkind == reflect.Ptr && field.Elem().Kind() == reflect.Map
+		isMap := fkind == reflect.Map
 
 		// Do we have a special sanitization function for this type? If so, use it
 		if sanFn, fErr := getFieldFunc(field, fieldSanFns); fErr == nil {
@@ -285,6 +287,23 @@ func (s Sanitizer) sanitizeRec(v reflect.Value) error {
 			}
 			for i := 0; i < field.Len(); i++ {
 				f := field.Index(i)
+				if f.Kind() == reflect.Ptr {
+					f = f.Elem()
+				}
+				if f.Kind() != reflect.Struct {
+					continue
+				}
+				if err := s.sanitizeRec(f); err != nil {
+					return err
+				}
+			}
+			continue
+		} else if isMap || isPtrToMap {
+			if isPtrToMap {
+				field = field.Elem()
+			}
+			for _, k := range field.MapKeys() {
+				f := field.MapIndex(k)
 				if f.Kind() == reflect.Ptr {
 					f = f.Elem()
 				}
