@@ -260,8 +260,7 @@ func (s Sanitizer) sanitizeRec(v reflect.Value) error {
 		}
 
 		// Do we have a special sanitization function for this type? If so, use it
-		ftype := field.Type().String()
-		if sanFn, ok := fieldSanFns[ftype]; ok {
+		if sanFn, fErr := getFieldFunc(field, fieldSanFns); fErr == nil {
 			if err := sanFn(s, v, i); err != nil {
 				return err
 			}
@@ -301,4 +300,16 @@ func (s Sanitizer) sanitizeRec(v reflect.Value) error {
 	}
 
 	return nil
+}
+
+func getFieldFunc(value reflect.Value, funcMap map[string]fieldSanFn) (fieldSanFn, error) {
+	ftype := value.Type().String()
+	if val, ok := funcMap[ftype]; ok {
+		return val, nil
+	}
+	if value.CanConvert(reflect.TypeOf(string(""))) ||
+		value.CanConvert(reflect.TypeOf(reflect.TypeOf([]string{}))) {
+		return funcMap["string"], nil
+	}
+	return nil, errors.New("cannot get sanitize function for type: " + ftype)
 }
