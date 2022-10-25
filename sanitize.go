@@ -75,10 +75,12 @@ func (s *Sanitizer) Sanitize(o interface{}) error {
 
 type fieldSanFn = func(s Sanitizer, structValue reflect.Value, idx int) error
 
+// RegisterSanitizer allows addition of more sanitize functions based on interface type
 func (s *Sanitizer) RegisterSanitizer(sanType interface{}, function func(Sanitizer, reflect.Value, int) error) {
 	fieldSanFns[getValue(sanType).Type().String()] = function
 }
 
+// GetSanitizeByType allows get of sanitize functions by interface type
 func (s *Sanitizer) GetSanitizeByType(sanType interface{}) (func(Sanitizer, reflect.Value, int) error, error) {
 	value := getValue(sanType)
 	function, ok := fieldSanFns[value.Type().String()]
@@ -321,6 +323,7 @@ func (s Sanitizer) sanitizeRec(v reflect.Value) error {
 	return nil
 }
 
+// getFieldFunc will check for whether value can be converted to string or []string if no func can be found
 func getFieldFunc(value reflect.Value, funcMap map[string]fieldSanFn) (fieldSanFn, error) {
 	ftype := value.Type().String()
 	if val, ok := funcMap[ftype]; ok {

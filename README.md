@@ -1,7 +1,5 @@
 # sanitize
 
-[![Go](https://github.com/firmys/sanitize/actions/workflows/go.yml/badge.svg)](https://github.com/firmys/sanitize/actions/workflows/go.yml)
-
 Package sanitize provides an easy way to clean fields in structs: trimming, applying maximum string lengths, minimum numeric values, default values, and so on...
 
 Sanitizing a struct will mutate the fields according to rules in the `san` tag. The tags work for both pointers and basic types.
