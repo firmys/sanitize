@@ -1,4 +1,4 @@
-module github.com/pplatt53666/sanitize
+module github.com/firmys/sanitize
 
 go 1.19
 
