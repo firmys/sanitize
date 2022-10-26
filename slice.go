@@ -9,7 +9,7 @@ import (
 // reflect.Value for the slice because it needs access to both the Value and
 // Type of the slice.
 func sanitizeSliceField(s Sanitizer, structValue reflect.Value, idx int) error {
-	fieldValue := structValue.Field(idx)
+	fieldValue := GetUnexportedField(structValue.Field(idx))
 
 	tags := s.fieldTags(structValue.Type().Field(idx).Tag)
 
