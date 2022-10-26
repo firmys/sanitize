@@ -6,6 +6,12 @@ import (
 )
 
 func GetUnexportedField(field reflect.Value) reflect.Value {
+	if !field.CanAddr() {
+		return field
+	}
+	if field.Kind() == reflect.Ptr && !field.IsNil() {
+		field = field.Elem()
+	}
 	return reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem()
 }
 
