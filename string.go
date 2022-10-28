@@ -54,6 +54,11 @@ func sanitizeStrField(s Sanitizer, structValue reflect.Value, idx int) error {
 			field.SetString(xss(oldStr))
 		}
 
+		if _, ok := tags["event"]; ok {
+			oldStr := field.String()
+			field.SetString(event(oldStr))
+		}
+
 		// Trim must happen before the other tags, no matter what other
 		// components there are.
 		if _, ok := tags["trim"]; ok {
@@ -135,6 +140,15 @@ var blacklistStripping = regexp.MustCompile(`[\p{Me}\p{C}<>=;(){}\[\]?]`)
 func xss(s string) string {
 	s = blacklistStripping.ReplaceAllString(s, " ")
 	s = replaceWhitespaces.ReplaceAllString(s, " ")
+	return s
+}
+
+func event(s string) string {
+	if strings.ContainsAny(s, "-; ") {
+		s = strings.ReplaceAll(s, "-", "_")
+		s = strings.ReplaceAll(s, ";", "_")
+		s = strings.ReplaceAll(s, " ", "_")
+	}
 	return s
 }
 
